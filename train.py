@@ -67,8 +67,9 @@ def load_prompts(path: str) -> Dict[str, str]:
 
 with open("API_KEY.txt", "r", encoding="utf-8") as f:
     API_KEY = f.read().strip()
+
 client = OpenAI(
-    api_key=API_KEY,  # 请替换为你的 API Key
+    api_key=API_KEY,
     base_url="https://api.chatanywhere.tech"
 )
 def build_client() -> OpenAI:
