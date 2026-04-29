@@ -1,4 +1,4 @@
-# bloom_dist_final
+# BloomGoal for ALFworld
 
 本目录包含基于 ALFWorld 的 BloomGoal 相关实现与训练脚本。
 
