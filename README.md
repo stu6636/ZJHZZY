@@ -10,7 +10,7 @@ This directory contains the implementation and training scripts for BloomGoal ba
 git clone https://github.com/alfworld/alfworld.git
 cd alfworld
 pip install setuptools==63.2.0
-pip install --no-build-isolation
+pip install --no-build-isolation visdom==0.1.8.9
 pip install -e .[full]
 ```
 
@@ -31,6 +31,7 @@ pip install -r requirement.txt
 
 ## Usage Instructions
 
+Write your API_KEY in API_KEY.txt
 Run the following command to execute the BloomGoal method:
 ```bash
 python bloom_dist.py
