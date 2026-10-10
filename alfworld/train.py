@@ -316,11 +316,11 @@ def lexical_reduction(goal_ob: str, action: str) -> float:
         return 0.0
     matches = sum(1 for g in goal_entities if g in action_entities)
     ratio = matches / max(1, len(set(goal_entities)))
-    score = 0.5 * ratio
+    score = ratio
     if score < 0.0:
         return 0.0
-    if score > 0.5:
-        return 0.5
+    if score > 1.0:
+        return 1.0
     return score
 
 
@@ -343,8 +343,8 @@ def parse_action_distance_json(raw: str, admissible: List[str]) -> Dict[str, flo
                             v = 0.0
                         if v < 0.0:
                             v = 0.0
-                        if v > 0.5:
-                            v = 0.5
+                        if v > 1.0:
+                            v = 1.0
                         result[a] = v
                 return result
     except Exception:
@@ -366,13 +366,13 @@ def llm_action_reduction_scores(
     actions_block = "\n".join([f"{i + 1}. {a}" for i, a in enumerate(admissible)])
     prompt = (
         "You are an ALFWorld action distance estimator.\n"
-        "For each admissible action, estimate a reduction score in [0, 0.5].\n"
+        "For each admissible action, estimate a reduction score in [0, 1].\n"
         "Smaller distance to task completion => larger reduction score.\n"
         f"Successful examples:\n{examples_text}\n"
         f"Current task goal:\n{goal_ob}\n"
         f"Current trajectory:\n{trajectory_text}\n"
         f"Admissible actions:\n{actions_block}\n"
-        "Output JSON object only. Keys must be exact action strings and values must be numbers in [0,0.5].\n"
+        "Output JSON object only. Keys must be exact action strings and values must be numbers in [0,1].\n"
     )
     out = llm2(prompt, client=client, model=model, max_tokens=max_tokens)
     return parse_action_distance_json(out, admissible)
@@ -401,7 +401,7 @@ def compute_action_distances(
     for a in admissible:
         lexical_score = lexical_reduction(goal_ob, a)
         llm_score = llm_scores.get(a, 0.0)
-        total_reduction = 0.5*lexical_score + llm_score
+        total_reduction = 0.5 * lexical_score + 0.5 * llm_score
         if total_reduction > 1.0:
             total_reduction = 1.0
         if total_reduction < 0.0:

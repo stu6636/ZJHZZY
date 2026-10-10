@@ -1,6 +1,8 @@
+import ast
 import importlib
 import inspect
 import json
+import re
 import sqlite3
 import sys
 import tempfile
@@ -9,6 +11,7 @@ import warnings
 from contextlib import closing
 from pathlib import Path
 from unittest import mock
+from typing import Dict, List
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -17,6 +20,40 @@ sys.path.insert(0, str(ROOT / "intercode_sql"))
 
 
 class ReleaseRunnerTests(unittest.TestCase):
+    def test_alfworld_distance_matches_paper_formula(self):
+        names = {
+            "extract_goal_entities", "extract_action_entities", "lexical_reduction",
+            "parse_action_distance_json", "llm_action_reduction_scores", "compute_action_distances",
+        }
+        for filename in ("bloom_dist.py", "bloom_dist_zero_shot.py", "train.py"):
+            with self.subTest(filename=filename):
+                source = ROOT / "alfworld" / filename
+                tree = ast.parse(source.read_text(encoding="utf-8"))
+                selected = [node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name in names]
+                prompts = []
+
+                def llm2(prompt, **_kwargs):
+                    prompts.append(prompt)
+                    return json.dumps({"take apple from table": 1.0})
+
+                scope = {
+                    "re": re, "json": json, "List": List, "Dict": Dict,
+                    "OpenAI": object, "StepRecord": object, "llm2": llm2,
+                    "format_trajectory_like_prompt": lambda _trajectory: "",
+                }
+                exec(compile(ast.Module(body=selected, type_ignores=[]), str(source), "exec"), scope)
+                goal = "Task: put apple in bowl"
+                action = "take apple from table"
+                self.assertEqual(scope["lexical_reduction"](goal, action), 0.5)
+                self.assertEqual(scope["parse_action_distance_json"](
+                    json.dumps({action: 1.5}), [action]
+                )[action], 1.0)
+                distances = scope["compute_action_distances"](
+                    [action], "", goal, [], None, "test-model", 100
+                )
+                self.assertEqual(distances[action], 0.25)
+                self.assertIn("reduction score in [0, 1]", prompts[0])
+
     def test_alfworld_has_its_own_directory(self):
         for name in (
             "bloom_dist.py", "bloom_dist_zero_shot.py", "train.py", "train_max.py",
