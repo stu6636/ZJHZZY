@@ -65,8 +65,14 @@ def load_prompts(path: str) -> Dict[str, str]:
             out[k] = v
     return out
 
-with open("API_KEY.txt", "r", encoding="utf-8") as f:
-    API_KEY = f.read().strip()
+API_KEY = os.environ.get("OPENAI_API_KEY", "").strip()
+if not API_KEY:
+    key_path = os.path.join(os.path.dirname(__file__), "API_KEY.txt")
+    if os.path.isfile(key_path):
+        with open(key_path, "r", encoding="utf-8") as f:
+            API_KEY = f.read().strip()
+if not API_KEY:
+    raise RuntimeError("Set OPENAI_API_KEY or create an untracked alfworld/API_KEY.txt")
 
 client = OpenAI(
     api_key=API_KEY,  # your API Key
@@ -624,7 +630,7 @@ def main():
                 if not name.startswith(task_key):
                     continue
                 examples = build_same_type_examples(prompts, task_tag, top_n=2)
-                init_prompt = f"Interact with a household to solve a task.Here are two examples.\n" + examples + "Here is the task.\n" +ob_text + "\n>"
+                init_prompt = f"Interact with a household to solve a task.Here is the task.\n" +ob_text + "\n>"
                 #print(init_prompt)
                 r1, done1, traj1 = run_episode(
                     env=env,
@@ -672,7 +678,7 @@ def main():
                         sim_env = create_single_game_env(game_file, config)
                         ob2, info2 = sim_env.reset()
                         ob2_text = "\n".join(ob2[0].split("\n\n")[1:])
-                        retry_prompt = f"Interact with a household to solve a task.Here are two examples.\n" + examples + "Here is the task.\n" +ob2_text + "\n>"
+                        retry_prompt = f"Interact with a household to solve a task.Here is the task.\n" +ob2_text + "\n>"
                         r2, done2, traj2 = run_episode(
                             env=sim_env,
                             init_prompt=retry_prompt,

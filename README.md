@@ -1,34 +1,35 @@
 # BloomGoal
 
-Code for BloomGoal in ALFWorld, WebShop, and InterCodeSQL. This repository contains BloomGoal only, plus BloomGoal-Retrieval for InterCodeSQL. Benchmark datasets, databases, server code, experiment logs, and API credentials are not included.
+Code for BloomGoal in ALFWorld, WebShop, and InterCodeSQL. Each environment has its own top-level directory. This repository contains BloomGoal only, plus BloomGoal-Retrieval for InterCodeSQL. Benchmark datasets, databases, server code, experiment logs, and API credentials are not included.
 
 ## Methods and files
 
 | Environment | Method | Entry point |
 | --- | --- | --- |
-| ALFWorld | BloomGoal | `bloom_dist.py` (`bloom_dist_zero_shot.py` for zero-shot) |
+| ALFWorld | BloomGoal | `alfworld/bloom_dist.py` (`alfworld/bloom_dist_zero_shot.py` for zero-shot) |
 | WebShop | BloomGoal | `webshop/bloomgoal_webshop_runner.py` |
-| InterCodeSQL | BloomGoal, FIFO lesson window of five | `intercode_sql/sqlite_sql/bloomgoal_sqlite_runner.py` |
+| InterCodeSQL | BloomGoal, FIFO lesson window of ten | `intercode_sql/sqlite_sql/bloomgoal_sqlite_runner.py` |
 | InterCodeSQL | BloomGoal-Retrieval, persistent lessons | `intercode_sql/sqlite_sql/bloomgoal_retrieval_sqlite_runner.py` |
 
-The WebShop runner keeps the latest 10 action-scoring and reflection-scoring lessons. The InterCodeSQL BloomGoal runner keeps the latest five of each. BloomGoal-Retrieval retains historical lessons, retrieves the five most relevant action-scoring lessons with TF-IDF cosine similarity, and uses a recent subset of reflection-scoring lessons in its reflection scorer. The retrieval variant is provided for InterCodeSQL only.
+The WebShop and base InterCodeSQL runners each keep the latest 10 action-scoring and reflection-scoring lessons. BloomGoal-Retrieval retains historical lessons, retrieves the five most relevant action-scoring lessons with TF-IDF cosine similarity, and uses a recent subset of reflection-scoring lessons in its reflection scorer. The retrieval variant is provided for InterCodeSQL only.
 
 ## API configuration
 
 The WebShop and InterCodeSQL runners use an OpenAI-compatible chat-completions endpoint. Set `OPENAI_API_KEY` in your environment. `OPENAI_MODEL` defaults to `gpt-5-mini`, and `OPENAI_BASE_URL` defaults to `https://api.openai.com/v1`. Set these variables to your provider's model and endpoint when needed. Do not commit credentials or `.api_env` files.
 
-The existing ALFWorld scripts read `API_KEY.txt`, which is a tracked empty placeholder in this repository. Keep real credentials out of commits. The ALFWorld implementation is unchanged.
+ALFWorld reads `OPENAI_API_KEY` first and can fall back to a local `alfworld/API_KEY.txt`. The key file is ignored by Git and is not included in the repository. Never commit credentials.
 
 ## ALFWorld
 
-Install the [ALFWorld benchmark](https://github.com/alfworld/alfworld) and its dependencies, then install this repository's ALFWorld requirements:
+Install the [ALFWorld benchmark](https://github.com/alfworld/alfworld) and its dependencies, then install this repository's ALFWorld requirements. Run the scripts from the `alfworld` directory:
 
 ```bash
+cd alfworld
 pip install -r requirement.txt
 python bloom_dist.py
 ```
 
-The ALFWorld script writes `bloom_dist_progress.json` and `bloom_memory.json`. Use `python train.py` or `python train_max.py` for training before evaluation when applicable. The zero-shot entry point is `python bloom_dist_zero_shot.py`.
+The ALFWorld script writes `bloom_dist_progress.json` and `bloom_memory.json` in `alfworld/`. Use `python train.py` or `python train_max.py` for training before evaluation when applicable. The zero-shot entry point is `python bloom_dist_zero_shot.py`.
 
 ## WebShop BloomGoal
 
@@ -53,7 +54,7 @@ python -m sqlite_sql.bloomgoal_sqlite_runner --data-path path/to/tasks.json --sq
 python -m sqlite_sql.bloomgoal_retrieval_sqlite_runner --data-path path/to/tasks.json --sqlite-root path/to/databases --task-index 0 --limit 1
 ```
 
-Both default to 15 turns per attempt, two retries after the initial attempt, and eight candidate actions per step (`--max-turns 15 --retry-k 2 --max-candidates 8`). Each run creates its own result directory and memory file unless `--out-dir` or `--memory-path` is specified. Set an explicit shared memory path only when you intend to reuse lessons across tasks. Keep the base and retrieval memory files separate.
+Both default to 15 turns per attempt, two retries after the initial attempt, and eight candidate actions per step (`--max-turns 15 --retry-k 2 --max-candidates 8`). The base runner stores at most 10 lessons of each scoring type; retrieval retains all historical scoring lessons. Each run creates its own result directory and memory file unless `--out-dir` or `--memory-path` is specified. Set an explicit shared memory path only when you intend to reuse lessons across tasks. Keep the base and retrieval memory files separate.
 
 ## Verification
 

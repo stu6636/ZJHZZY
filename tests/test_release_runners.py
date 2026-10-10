@@ -1,4 +1,5 @@
 import importlib
+import inspect
 import json
 import sqlite3
 import sys
@@ -16,6 +17,16 @@ sys.path.insert(0, str(ROOT / "intercode_sql"))
 
 
 class ReleaseRunnerTests(unittest.TestCase):
+    def test_alfworld_has_its_own_directory(self):
+        for name in (
+            "bloom_dist.py", "bloom_dist_zero_shot.py", "train.py", "train_max.py",
+            "base_config.yaml", "requirement.txt", "prompts/alfworld_3prompts.json",
+        ):
+            with self.subTest(name=name):
+                self.assertTrue((ROOT / "alfworld" / name).is_file())
+                self.assertFalse((ROOT / name).exists())
+        self.assertFalse((ROOT / "API_KEY.txt").exists())
+
     def test_webshop_loads_api_env_before_server_configuration(self):
         source = (ROOT / "webshop" / "bloomgoal_webshop_runner.py").read_text(encoding="utf-8")
         self.assertGreater(
@@ -72,7 +83,7 @@ class ReleaseRunnerTests(unittest.TestCase):
         retrieval = importlib.import_module("sqlite_sql.bloomgoal_retrieval_sqlite_runner")
         base_memory = {"scoring_lessons": []}
         retrieval_memory = {"scoring_lessons": []}
-        for index in range(7):
+        for index in range(12):
             lesson = {
                 "before_state": f"state {index} target{index}",
                 "step": f"execute SELECT {index}",
@@ -80,20 +91,24 @@ class ReleaseRunnerTests(unittest.TestCase):
             }
             base.append_scoring_lessons(base_memory, [lesson])
             retrieval.append_scoring_lessons(retrieval_memory, [lesson])
-        self.assertEqual(len(base_memory["scoring_lessons"]), 5)
-        self.assertEqual(len(retrieval_memory["scoring_lessons"]), 7)
+        self.assertEqual(len(base_memory["scoring_lessons"]), 10)
+        self.assertEqual(len(retrieval_memory["scoring_lessons"]), 12)
         selected = retrieval.select_relevant_scoring_lessons(
-            retrieval_memory, "state 6 target6", limit=1
+            retrieval_memory, "state 11 target11", limit=1
         )
-        self.assertEqual(selected[0]["before_state"], "state 6 target6")
+        self.assertEqual(selected[0]["before_state"], "state 11 target11")
         base_reflections = {"reflection_scoring_lessons": []}
         retrieval_reflections = {"reflection_scoring_lessons": []}
-        for index in range(7):
+        for index in range(12):
             lesson = {"direction": "overrated", "scoring_lesson": f"reflection rule {index}"}
             base.append_reflection_scoring_lessons(base_reflections, [lesson])
             retrieval.append_reflection_scoring_lessons(retrieval_reflections, [lesson])
-        self.assertEqual(len(base_reflections["reflection_scoring_lessons"]), 5)
-        self.assertEqual(len(retrieval_reflections["reflection_scoring_lessons"]), 7)
+        self.assertEqual(len(base_reflections["reflection_scoring_lessons"]), 10)
+        self.assertEqual(len(retrieval_reflections["reflection_scoring_lessons"]), 12)
+
+    def test_base_candidate_default_is_eight(self):
+        base = importlib.import_module("sqlite_sql.bloomgoal_sqlite_runner")
+        self.assertEqual(inspect.signature(base.run_policy_episode).parameters["max_candidates"].default, 8)
 
     def test_webshop_scoring_lessons_use_ten_entry_windows(self):
         module = importlib.import_module("bloomgoal_webshop_runner")

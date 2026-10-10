@@ -65,8 +65,14 @@ def load_prompts(path: str) -> Dict[str, str]:
             out[k] = v
     return out
 
-with open("API_KEY.txt", "r", encoding="utf-8") as f:
-    API_KEY = f.read().strip()
+API_KEY = os.environ.get("OPENAI_API_KEY", "").strip()
+if not API_KEY:
+    key_path = os.path.join(os.path.dirname(__file__), "API_KEY.txt")
+    if os.path.isfile(key_path):
+        with open(key_path, "r", encoding="utf-8") as f:
+            API_KEY = f.read().strip()
+if not API_KEY:
+    raise RuntimeError("Set OPENAI_API_KEY or create an untracked alfworld/API_KEY.txt")
 
 client = OpenAI(
     api_key=API_KEY,

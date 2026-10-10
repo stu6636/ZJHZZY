@@ -3,6 +3,7 @@ __pycache__/
 .api_env
 .env
 .env.*
+API_KEY.txt
 *.sqlite
 *.db
 *.jsonl
@@ -10,5 +11,6 @@ webshop/eval_runs/
 webshop/BloomGoal_WebShop_memory*.json
 intercode_sql/results/
 tests/tmp*/
-bloom_dist_progress.json
-bloom_memory.json
+alfworld/bloom_dist_progress*.json
+alfworld/bloom_memory.json
+alfworld/alf_bloom_result*.txt

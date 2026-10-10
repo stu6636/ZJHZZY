@@ -1,4 +1,4 @@
-"""BloomGoal FIFO-window-5 (no retrieval) for InterCode SQLite.
+"""BloomGoal FIFO-window-10 (no retrieval) for InterCode SQLite.
 
 Action and reflection scoring lessons retain only the newest five entries.
 
@@ -31,7 +31,7 @@ from sqlite_sql.runner_support import (
 )
 
 
-LESSON_WINDOW_SIZE = 5
+LESSON_WINDOW_SIZE = 10
 DEFAULT_MEMORY_PATH = None
 DEFAULT_SUCCESS_REWARD = float(os.environ.get("SUCCESS_REWARD", "1.0"))
 MODEL = os.environ.get("OPENAI_MODEL", "gpt-5-mini")
@@ -360,7 +360,7 @@ def resolve_run_paths(
     else:
         from uuid import uuid4
         result_dir = Path("results") / (
-            time.strftime("bloomgoal_window5_%Y%m%d_%H%M%S_") + uuid4().hex[:8]
+            time.strftime("bloomgoal_window10_%Y%m%d_%H%M%S_") + uuid4().hex[:8]
         )
     result_dir.mkdir(parents=True, exist_ok=True)
     resolved_memory = (
@@ -1819,7 +1819,7 @@ def run_policy_episode(
     max_turns: int,
     memory: Dict[str, Any],
     active_reflection: str = "",
-    max_candidates: int = 10,
+    max_candidates: int = 8,
     failed_trajectories: Sequence[str] = (),
 ) -> Dict[str, Any]:
     observation, _ = env.reset(task_index)
@@ -2311,7 +2311,7 @@ def run_bloomgoal_eval(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run BloomGoal over no-Docker InterCode-SQL SQLite tasks (FIFO lesson window=5; no similarity retrieval).")
+    parser = argparse.ArgumentParser(description="Run BloomGoal over no-Docker InterCode-SQL SQLite tasks (FIFO lesson window=10; no similarity retrieval).")
     parser.add_argument("--data-path", required=True)
     parser.add_argument("--sqlite-root", required=True)
     parser.add_argument("--task-index", type=int, default=0)
