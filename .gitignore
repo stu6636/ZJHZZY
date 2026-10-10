@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.api_env
+.env
+.env.*
+*.sqlite
+*.db
+*.jsonl
+webshop/eval_runs/
+webshop/BloomGoal_WebShop_memory*.json
+intercode_sql/results/
+tests/tmp*/
+bloom_dist_progress.json
+bloom_memory.json
